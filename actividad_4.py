@@ -110,6 +110,42 @@ def create_folder():
     send_button.pack(side=tk.TOP)
     dropbox._root = popup
 
+def renombrar():
+    selected_items = selected_items2[0]
+    archivo = dropbox._files[selected_items]
+    nombre_anterior = archivo['name']
+    path_anterior = dropbox._path + "/" + nombre_anterior if dropbox._path != "/" else "/" + nombre_anterior
+
+    popup = tk.Toplevel(newroot)
+    popup.geometry('400x100')
+    popup.title('Renombrar archivo o carpeta')
+    popup.iconbitmap('./favicon.ico')
+    helper.center(popup)
+
+    frame = tk.Frame(popup, padx=10, pady=10)
+    frame.pack(fill=tk.BOTH, expand=True)
+
+    label = tk.Label(frame, text=f"Renombrar '{nombre_anterior}' a:")
+    label.pack(side=tk.TOP)
+
+    entry_field = tk.Entry(frame, width=35)
+    entry_field.insert(0, nombre_anterior)
+    entry_field.pack(side=tk.TOP)
+
+    def confirmar_renombrado():
+        nuevo_nombre = entry_field.get()
+        if not nuevo_nombre or nuevo_nombre == nombre_anterior:
+            popup.destroy()
+            return
+        path_nuevo = dropbox._path + "/" + nuevo_nombre if dropbox._path != "/" else "/" + nuevo_nombre
+        dropbox.renombrar(path_anterior, path_nuevo)
+        dropbox.list_folder(msg_listbox2)
+        popup.destroy()
+
+    send_button = tk.Button(frame, text="Renombrar", command=confirmar_renombrado)
+    send_button.pack(side=tk.TOP)
+
+    dropbox._root = popup
 
 ##########################################################################################################
 
@@ -243,13 +279,15 @@ msg_listbox2.pack(side=tk.RIGHT, fill=tk.BOTH)
 #messages_frame2.pack()
 messages_frame2.grid(row=1, column=2, ipadx=10, ipady=10, padx=2, pady=2)
 
-# Frame con botones Create y Delete (1,3)
+# Frame con botones Create , Delete y Renombrar (1,3)
 
 frame2 = tk.Frame(newroot)
 button2 = tk.Button(frame2, borderwidth=4, background="red", text="Delete", width=10, pady=8, command=delete_files)
 button2.pack(padx=2, pady=2)
 button3 = tk.Button(frame2, borderwidth=4, text="Create folder", width=10, pady=8, command=create_folder)
 button3.pack(padx=2, pady=2)
+button4 = tk.Button(frame2, borderwidth=4, text="Renombrar", width=10, pady=8, command=renombrar)
+button4.pack(padx=2, pady=2)
 frame2.grid(row=1, column=3,  ipadx=10, ipady=10)
 
 for each in pdfs:
