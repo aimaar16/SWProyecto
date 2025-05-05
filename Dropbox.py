@@ -46,7 +46,7 @@ class Dropbox:
                         "<head><title>Proba</title></head>" \
                         "<body>The authentication flow has completed. Close this window.</body>" \
                         "</html>"
-        client_connection.sendall(http_response)
+        client_connection.sendall(http_response.encode(encoding="utf-8"))
         client_connection.close()
         server_socket.close()
 
@@ -104,6 +104,9 @@ class Dropbox:
         # Y PROCESAMIENTO DE LA RESPUESTA HTTP
         #############################################
         uri = 'https://api.dropboxapi.com/2/files/list_folder'
+        if self._path=="/":
+            self._path = ""
+
         headers = {
             'Authorization': 'Bearer ' + self._access_token,
             'Content-Type': 'application/json'
@@ -119,19 +122,8 @@ class Dropbox:
         }
 
         respuesta = requests.post(uri, headers=headers, json=data)
-        contenido_json = respuesta.json()
-        for carpeta in contenido_json.get('entries'):
-            print(f"- {carpeta['name']}")
-            uri = 'https://content.dropboxapi.com/2/files/download'
-            print(carpeta['path_display'])
-            headers = {
-                'Authorization': 'Bearer ' + self._access_token,
-                'Dropbox-API-Key': {'path': carpeta['path_display']}
-            }
-            respuesta = requests.post(uri, headers=headers)
-            if respuesta.status_code != 200:
-                print("Error al obtener carpetas:", respuesta.text)
-                return
+        contenido_json = json.loads(respuesta.content)
+
         self._files = helper.update_listbox2(msg_listbox, self._path, contenido_json)
 
     def transfer_file(self, file_path, file_data):
@@ -142,6 +134,24 @@ class Dropbox:
         # RELLENAR CON CODIGO DE LA PETICION HTTP
         # Y PROCESAMIENTO DE LA RESPUESTA HTTP
         #############################################
+        datosJson = {
+            "autorename": False,
+            "mode": "add",
+            "mute": False,
+            "path": file_path,
+            "strict_conflict": False
+        }
+        headers = {
+            'Authorization': 'Bearer ' + self._access_token,
+            'Content-Type': 'application/octet-stream',
+            'Dropbox-API-Arg': json.dumps(datosJson)
+        }
+
+        respuesta = requests.post(uri, headers=headers, data=file_data)
+        if respuesta.status_code == 200:
+            print("Archivo enviado con éxito.")
+        else:
+            print("Error al enviar el archivo")
 
     def delete_file(self, file_path):
         print("/delete_file")
@@ -151,6 +161,19 @@ class Dropbox:
         # RELLENAR CON CODIGO DE LA PETICION HTTP
         # Y PROCESAMIENTO DE LA RESPUESTA HTTP
         #############################################
+        headers = {
+            'Authorization': 'Bearer ' + self._access_token,
+            'Content-Type': 'application/json',
+        }
+        data={
+            "path": file_path,
+        }
+        respuesta = requests.post(uri, headers=headers, json=data)
+
+        if respuesta.status_code==200:
+            print("Archivo/Carpeta eliminado con éxito")
+        else:
+            print("Error al eliminar el archivo/carpeta")
 
     def create_folder(self, path):
         print("/create_folder")
@@ -159,3 +182,39 @@ class Dropbox:
         # RELLENAR CON CODIGO DE LA PETICION HTTP
         # Y PROCESAMIENTO DE LA RESPUESTA HTTP
         #############################################
+        uri="https://api.dropboxapi.com/2/files/create_folder_v2"
+        headers = {
+            'Authorization': 'Bearer ' + self._access_token,
+            'Content-Type': 'application/json',
+        }
+        data={
+            "path": path,
+            "autorename": False
+        }
+        respuesta = requests.post(uri, headers=headers, json=data)
+        if respuesta.status_code == 200:
+            print("Carpeta creada con éxito")
+        else:
+            print("Error al crear la carpeta")
+##### NUEVA FUNCIONALIDAD AÑADIDA #####
+    def renombrar(self, path_anterior, path_nuevo):
+        print("/renombar")
+        uri="https://api.dropboxapi.com/2/files/move_v2"
+        headers = {
+            'Authorization': 'Bearer ' + self._access_token,
+            'Content-Type': 'application/json',
+        }
+        data={
+            "allow_ownership_transfer": False,
+            "allow_shared_folder": False,
+            "autorename": False,
+            "from_path": path_anterior,
+            "to_path": path_nuevo
+        }
+        respuesta = requests.post(uri, headers=headers, json=data)
+        if respuesta.status_code == 200:
+            print("Nombre modificado con éxito")
+        else:
+            print("Error al modificar el nombre")
+
+
