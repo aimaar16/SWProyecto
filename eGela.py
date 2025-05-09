@@ -223,6 +223,6 @@ class eGela:
         pdf=self._refs[selection]
         pdf_name=pdf['pdf_name']+".pdf"
         pdf_link=pdf['pdf_link']
-        pdf_response = requests.request('GET', pdf, headers=cabecera, allow_redirects=False)
+        pdf_response = requests.request('GET', pdf_link, headers=cabecera, allow_redirects=False)
         pdf_content = requests.request('GET', pdf_response.headers['Location'], headers=cabecera, allow_redirects=False)
         return pdf_name, pdf_content
